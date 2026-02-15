@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>CyberSpace</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>CyberSpace</h1>
+      <small>made with ❤️ at our uni hackathon</small>
+    </header>
+
+    <section class="card">
+      <p>✅ API pre-configured for production</p>
+      <small class="hint">Ready to scan URLs</small>
+    </section>
+
+    <section class="card">
+      <label for="urlInput">Check any URL</label>
+      <div class="row">
+        <input id="urlInput" type="text" placeholder="https://example.com" />
+        <button id="checkBtn">Check</button>
+      </div>
+      <button id="checkCurrent">Check Current Tab</button>
+    </section>
+
+    <section id="result" class="card hidden">
+      <div id="verdict" class="verdict">Result will appear here…</div>
+      <div id="details" class="details"></div>
+    </section>
+
+    <footer>
+      <button id="openOptions">Options</button>
+      <a id="repoLink" href="#" target="_blank" rel="noreferrer">Docs</a>
+    </footer>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

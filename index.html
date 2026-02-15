@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CyberSpace – Stay Safe Online</title>
+    <meta name="description" content="CyberSpace helps you scan links, check email breaches, and track your cyber safety score.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <header class="header">
+      <div class="container header__inner">
+        <div class="brand">
+          <div class="brand__logo">🛡️</div>
+          <div class="brand__text">CyberSpace</div>
+        </div>
+        <nav class="nav">
+          <a href="#home" class="nav__link" data-nav>Home</a>
+          <a href="#dashboard" class="nav__link" data-nav>Dashboard</a>
+          <a href="#extension" class="nav__link" data-nav>Extension</a>
+          <a href="#about" class="nav__link" data-nav>About</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main">
+      <section id="home" class="section section--active">
+        <div class="container grid grid--2col">
+          <div class="panel">
+            <h1 class="title">CyberSpace – Stay Safe Online</h1>
+            <p class="subtitle">Scan links, check email breaches, and grow your Cyber Safety Score.</p>
+
+            <div class="card">
+              <h2 class="card__title">Scan a Link</h2>
+              <form id="urlForm" class="form" novalidate>
+                <div class="form__row">
+                  <input id="urlInput" type="url" class="input" placeholder="https://example.com" aria-label="URL to scan" required>
+                  <button id="scanBtn" type="submit" class="btn btn--primary">Scan</button>
+                </div>
+                <div id="urlError" class="form__error" role="alert" aria-live="polite"></div>
+              </form>
+            </div>
+
+            <div class="card">
+              <h2 class="card__title">Check Email Breach</h2>
+              <form id="emailForm" class="form" novalidate>
+                <div class="form__row">
+                  <input id="emailInput" type="email" class="input" placeholder="you@example.com" aria-label="Email to check" required>
+                  <button id="breachBtn" type="submit" class="btn btn--secondary">Check</button>
+                </div>
+                <div id="emailError" class="form__error" role="alert" aria-live="polite"></div>
+                <div id="backendStatus" class="form__status">
+                  Backend: <span id="backendStatusText">Checking...</span>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="score">
+              <div class="score__ring">
+                <svg viewBox="0 0 120 120" class="ring" aria-label="Cyber Safety Score">
+                  <circle class="ring__bg" cx="60" cy="60" r="52" />
+                  <circle class="ring__progress" cx="60" cy="60" r="52" />
+                </svg>
+                <div class="score__value">
+                  <div id="scoreValue">0</div>
+                  <div class="score__label">Cyber Safety Score</div>
+                </div>
+              </div>
+              <p class="muted">Safe sites: +1 • Breach or malicious: -10</p>
+            </div>
+
+            <div id="results" class="results">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="dashboard" class="section">
+        <div class="container">
+          <h2 class="section__title">Dashboard & History</h2>
+
+          <div class="history">
+            <div class="history__block">
+              <h3>Last Scanned URLs</h3>
+              <div class="table">
+                <div class="table__head">
+                  <div>URL</div>
+                  <div>Status</div>
+                  <div>When</div>
+                </div>
+                <div id="urlHistory" class="table__body"></div>
+              </div>
+            </div>
+
+            <div class="history__block">
+              <h3>Last Checked Emails</h3>
+              <div class="table">
+                <div class="table__head">
+                  <div>Email</div>
+                  <div>Status</div>
+                  <div>When</div>
+                </div>
+                <div id="emailHistory" class="table__body"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="extension" class="section">
+        <div class="container">
+          <h2 class="section__title">CyberSpace Browser Extension</h2>
+          <p class="subtitle">Protect yourself while browsing with our powerful security extension</p>
+
+          <div class="grid">
+            <div class="panel">
+              <div class="card">
+                <h3 class="card__title">🚀 Download Extension</h3>
+                <p>Get the CyberSpace extension for real-time website protection</p>
+                <button id="downloadExtension" class="btn btn--primary">Download Extension</button>
+                <div id="downloadInstructions" class="download-instructions hidden">
+                  <h4>Installation Steps:</h4>
+                  <ol>
+                    <li>Download the extension files</li>
+                    <li>Open Chrome and go to <code>chrome://extensions/</code></li>
+                    <li>Enable "Developer mode" (toggle in top right)</li>
+                    <li>Click "Load unpacked" and select the extracted folder</li>
+                    <li>✅ Production API is pre-configured</li>
+                    <li>✅ No configuration needed - ready to use!</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div class="card">
+                <h3 class="card__title">⚙️ Extension Features</h3>
+                <ul class="feature-list">
+                  <li>✅ Real-time website safety checking</li>
+                  <li>✅ Automatic threat detection</li>
+                  <li>✅ One-click security analysis</li>
+                  <li>✅ Badge indicators for safety status</li>
+                  <li>✅ Seamless integration with your backend</li>
+                </ul>
+              </div>
+            </div>
+
+
+          </div>
+        </div>
+      </section>
+
+      <section id="about" class="section">
+        <div class="container">
+          <h2 class="section__title">About</h2>
+          <p class="muted">This is a demo. Real checks will connect to a backend later.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <span>© <span id="year"></span> CyberSpace</span>
+        <a class="link" href="#home" data-nav>Back to top ↑</a>
+      </div>
+    </footer>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
