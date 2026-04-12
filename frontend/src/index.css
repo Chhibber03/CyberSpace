@@ -6,42 +6,52 @@
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* ── Core Palette ── */
+  /* ── Core Palette: Deep Space ── */
   --bg:          #020617;
-  --bg-elevated: #0F172A;
-  --surface:     #1E293B;
+  --bg-elevated: #0B1120;
+  --surface:     #111827;
   --text:        #F8FAFC;
+  --text-primary:#FFFFFF;
   --text-muted:  #94A3B8;
-  --primary:     #3B82F6;
-  --primary-glow:#3B82F6;
-  --primary-hover:#2563EB;
-  --accent:      #22C55E;
-  --accent-glow: #22C55E;
-  --danger:      #EF4444;
-  --danger-glow: #EF4444;
-  --warning:     #F59E0B;
+  
+  /* ── CyberNeon Palette ── */
+  --primary:     #6366F1; /* Indigo */
+  --primary-glow:rgba(99, 102, 241, 0.5);
+  --primary-hover:#4F46E5;
+  
+  --accent:      #06B6D4; /* Cyan */
+  --accent-glow: rgba(6, 182, 212, 0.5);
+  
+  --success:     #10B981; /* Emerald */
+  --success-glow:rgba(16, 185, 129, 0.5);
+  
+  --danger:      #F43F5E; /* Rose */
+  --danger-glow: rgba(244, 63, 94, 0.5);
+  
+  --warning:     #F59E0B; /* Amber */
 
   /* ── Glass System ── */
-  --glass-bg:         rgba(15, 23, 42, 0.55);
-  --glass-bg-strong:  rgba(15, 23, 42, 0.75);
-  --glass-border:     rgba(255, 255, 255, 0.08);
-  --glass-border-hover: rgba(255, 255, 255, 0.15);
-  --glass-blur:       16px;
-  --glass-blur-heavy: 24px;
+  --glass-bg:         rgba(15, 23, 42, 0.4);
+  --glass-bg-strong:  rgba(15, 23, 42, 0.7);
+  --glass-border:     rgba(255, 255, 255, 0.05);
+  --glass-border-hover: rgba(255, 255, 255, 0.12);
+  --glass-blur:       12px;
+  --glass-blur-heavy: 20px;
 
   /* ── Spacing ── */
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 24px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
   --radius-pill: 999px;
 
   /* ── Shadows & Glows ── */
-  --shadow-card: 0 4px 30px rgba(0, 0, 0, 0.3);
-  --shadow-elevated: 0 8px 40px rgba(0, 0, 0, 0.4);
-  --glow-primary: 0 0 30px rgba(59, 130, 246, 0.25);
-  --glow-success: 0 0 24px rgba(34, 197, 94, 0.35);
-  --glow-danger:  0 0 24px rgba(239, 68, 68, 0.35);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-elevated: 0 12px 48px rgba(0, 0, 0, 0.6);
+  --glow-primary: 0 0 20px var(--primary-glow);
+  --glow-accent:  0 0 20px var(--accent-glow);
+  --glow-success: 0 0 20px var(--success-glow);
+  --glow-danger:  0 0 20px var(--danger-glow);
 
   /* ── Transitions ── */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -69,23 +79,16 @@ body {
   overflow-x: hidden;
 }
 
-/* ─── Animated Background ─── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  background:
-    radial-gradient(ellipse 800px 500px at 15% -5%, rgba(59, 130, 246, 0.12), transparent),
-    radial-gradient(ellipse 600px 400px at 85% 10%, rgba(34, 197, 94, 0.08), transparent),
-    radial-gradient(ellipse 500px 500px at 50% 80%, rgba(139, 92, 246, 0.06), transparent);
-  pointer-events: none;
-  animation: bgPulse 12s ease-in-out infinite alternate;
-}
-
-@keyframes bgPulse {
-  0%   { opacity: 0.7; }
-  100% { opacity: 1; }
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: 'Fira Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 /* ─── Layout ─── */
@@ -94,7 +97,41 @@ body::before {
   margin: 0 auto;
   padding: 0 24px;
   position: relative;
-  z-index: 1;
+  z-index: 10; /* Above stars */
+}
+
+/* ─── Brand Display (Home Page) ─── */
+.panel--centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.brand-display {
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.brand-display__logo {
+  color: var(--text-primary);
+  filter: drop-shadow(0 0 15px var(--primary-glow));
+  animation: logoFloat 4s ease-in-out infinite;
+  transition: transform 0.3s ease;
+}
+
+.brand-display__logo:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 25px var(--primary-glow));
+}
+
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 /* ═══════════════════════════════════════════ */
@@ -444,77 +481,6 @@ body::before {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.4; }
-}
-
-/* ═══════════════════════════════════════════ */
-/*  SCORE RING                                */
-/* ═══════════════════════════════════════════ */
-.score {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: center;
-}
-
-.score__ring {
-  position: relative;
-  width: 220px;
-  height: 220px;
-  margin: 0 auto;
-}
-
-.ring {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-  filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.3));
-}
-
-.ring__bg {
-  fill: none;
-  stroke: rgba(30, 41, 59, 0.6);
-  stroke-width: 10;
-}
-
-.ring__progress {
-  fill: none;
-  stroke: url(#scoreGradient);
-  stroke-width: 10;
-  stroke-linecap: round;
-  stroke-dasharray: 327;
-  stroke-dashoffset: 327;
-  filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.5));
-}
-
-.score__value {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  pointer-events: none;
-}
-
-.score__value #scoreValue {
-  font-family: 'Fira Code', monospace;
-  font-size: 44px;
-  font-weight: 700;
-  line-height: 1;
-  background: linear-gradient(180deg, var(--text) 0%, var(--text-muted) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.score__label {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 6px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  font-weight: 500;
 }
 
 /* ═══════════════════════════════════════════ */

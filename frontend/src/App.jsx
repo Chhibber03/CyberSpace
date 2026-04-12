@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
+import StarBackground from './components/StarBackground';
 import HomeSection from './components/HomeSection';
 import DashboardSection from './components/DashboardSection';
 import ExtensionSection from './components/ExtensionSection';
 import AboutSection from './components/AboutSection';
-import Footer from './components/Footer';
 import { BACKEND_CONFIG } from './config';
 
 // Helpers
 const STORAGE_KEYS = {
-  SCORE: 'cyberspace_score',
   URL_HISTORY: 'cyberspace_url_history',
   EMAIL_HISTORY: 'cyberspace_email_history',
 };
@@ -91,7 +90,6 @@ function isEmailBreachedDemo(email) {
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('home');
-  const [score, setScore] = useState(0);
   const [urlHistory, setUrlHistory] = useState([]);
   const [emailHistory, setEmailHistory] = useState([]);
   const [results, setResults] = useState([]);
@@ -104,9 +102,6 @@ export default function App() {
 
   // Initial load
   useEffect(() => {
-    const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
-    const initialScore = clamp(readNumber(STORAGE_KEYS.SCORE, 0), -100, 100);
-    setScore(initialScore);
     setUrlHistory(readJson(STORAGE_KEYS.URL_HISTORY, []));
     setEmailHistory(readJson(STORAGE_KEYS.EMAIL_HISTORY, []));
 
@@ -118,15 +113,6 @@ export default function App() {
     const interval = setInterval(checkBackendStatus, 30000);
     return () => clearInterval(interval);
   }, []);
-
-  const adjustScore = (delta) => {
-    setScore(prev => {
-      const current = Math.max(-100, Math.min(100, prev));
-      const next = Math.max(-100, Math.min(100, current + delta));
-      writeNumber(STORAGE_KEYS.SCORE, next);
-      return next;
-    });
-  };
 
   const pushUrlHistory = (entry) => {
     setUrlHistory(prev => {
@@ -198,7 +184,6 @@ export default function App() {
         pushUrlHistory({ url: normalized, verdict, ts: Date.now() });
 
         if (data.safe) {
-          adjustScore(+1);
           addResult({
             kind: 'url',
             title: 'Safe Website',
@@ -207,7 +192,6 @@ export default function App() {
             url: normalized,
           });
         } else {
-          adjustScore(-10);
           addResult({
             kind: 'url',
             title: 'Phishing Detected',
@@ -226,7 +210,6 @@ export default function App() {
         pushUrlHistory({ url: normalized, verdict, ts: Date.now() });
 
         if (verdict.safe) {
-          adjustScore(+1);
           addResult({
             kind: 'url',
             title: 'Safe Website (Demo)',
@@ -235,7 +218,6 @@ export default function App() {
             url: normalized,
           });
         } else {
-          adjustScore(-10);
           addResult({
             kind: 'url',
             title: 'Phishing Detected (Demo)',
@@ -289,7 +271,6 @@ export default function App() {
         });
 
         if (breached) {
-          adjustScore(-10);
           addResult({
             kind: 'email',
             title: 'Found in leaks',
@@ -324,7 +305,6 @@ export default function App() {
         });
 
         if (breached) {
-          adjustScore(-10);
           addResult({
             kind: 'email',
             title: 'Found in leaks (Demo)',
@@ -362,12 +342,12 @@ export default function App() {
 
   return (
     <>
+      <StarBackground />
       <Navbar activeSection={activeSection} onNavigate={handleNavigate} />
       
       <main className="main">
         <HomeSection 
           isActive={activeSection === 'home'} 
-          score={score}
           results={results}
           onScanUrl={handleScanUrl}
           onCheckEmail={handleCheckEmail}
@@ -384,8 +364,6 @@ export default function App() {
         <ExtensionSection isActive={activeSection === 'extension'} />
         <AboutSection isActive={activeSection === 'about'} />
       </main>
-
-      <Footer onNavigate={handleNavigate} />
     </>
   );
 }
