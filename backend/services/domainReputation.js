@@ -90,7 +90,7 @@ async function analyzeDomainHeuristics(domain) {
 
   try {
     // Check for suspicious TLDs (expanded list)
-    const suspiciousTlds = ['xyz', 'top', 'club', 'online', 'site', 'gq', 'ml', 'cf', 'tk', 'click', 'link', 'bid', 'loan', 'work', 'tech', 'app', 'dev', 'io', 'co', 'me', 'tv', 'cc', 'ws', 'info', 'biz', 'zip', 'mov', 'country', 'ga'];
+    const suspiciousTlds = ['xyz', 'top', 'club', 'online', 'site', 'gq', 'ml', 'cf', 'tk', 'click', 'link', 'bid', 'loan', 'work', 'cc', 'ws', 'biz', 'zip', 'mov', 'country', 'ga'];
     const domainParts = domain.split('.');
     const tld = domainParts.length > 0 ? domainParts[domainParts.length - 1] : 'unknown';
     
@@ -119,7 +119,7 @@ async function analyzeDomainHeuristics(domain) {
     }
 
     // Check for suspicious patterns (expanded list)
-    const suspiciousPatterns = ['bank', 'secure', 'login', 'verify', 'update', 'account', 'password', 'credit', 'debit', 'social', 'security', 'irs', 'paypal', 'wallet', 'free', 'gift', 'bonus', 'claim', 'reward', 'prize', 'winner', 'urgent', 'limited', 'offer', 'discount', 'sale', 'deal', 'save', 'money', 'cash', 'payment', 'billing', 'invoice', 'refund', 'support', 'help', 'customer', 'service'];
+    const suspiciousPatterns = ['secure-login', 'verify-account', 'update-password', 'signin-', 'login-', 'wallet-', 'free-gift', 'bonus-', 'claim-reward', 'prize-winner', 'urgent-', 'limited-offer'];
     const foundPatterns = suspiciousPatterns.filter(pattern => 
       domain.toLowerCase().includes(pattern)
     );

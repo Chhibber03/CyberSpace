@@ -9,6 +9,10 @@ function checkApiConfiguration() {
     rapidapi: {
       configured: !!(process.env.RAPIDAPI_KEY && process.env.RAPIDAPI_KEY !== 'your_rapidapi_key_here' && process.env.RAPIDAPI_KEY !== 'demo-key'),
       key: process.env.RAPIDAPI_KEY ? '***' + process.env.RAPIDAPI_KEY.slice(-4) : 'Not set'
+    },
+    hibp: {
+      configured: !!(process.env.HIBP_API_KEY && process.env.HIBP_API_KEY !== 'your_hibp_key_here'),
+      key: process.env.HIBP_API_KEY ? '***' + process.env.HIBP_API_KEY.slice(-4) : 'Not set'
     }
   };
   
@@ -41,6 +45,7 @@ async function checkEmailBreach(email) {
     }
     
     const results = await Promise.allSettled([
+      checkHIBP(email),
       checkBreachDirectory(email),
       checkEmailReputation(email)
     ]);
@@ -96,7 +101,7 @@ async function checkEmailBreach(email) {
       safe: riskLevel === 'safe',
       details: {
         apiResults: results.map((r, i) => ({
-          api: ['BreachDirectory', 'EmailReputation'][i],
+          api: ['HIBP', 'BreachDirectory', 'EmailReputation'][i],
           success: r.status === 'fulfilled',
           data: r.status === 'fulfilled' ? r.value : null,
           error: r.status === 'rejected' ? r.reason.message : null
@@ -114,7 +119,70 @@ async function checkEmailBreach(email) {
   }
 }
 
-// HaveIBeenPwned API removed - requires paid subscription
+/**
+ * Check HaveIBeenPwned API (PRIMARY breach check)
+ */
+async function checkHIBP(email) {
+  const hibpKey = process.env.HIBP_API_KEY;
+  if (!hibpKey || hibpKey === 'your_hibp_key_here') {
+    logger.warn('[HIBP] API key not configured — check skipped');
+    return { breaches: [], warnings: [{ type: 'hibp_not_configured' }] };
+  }
+
+  try {
+    const response = await axios.get(
+      `https://haveibeenpwned.com/api/v3/breachedaccount/${encodeURIComponent(email)}?truncateResponse=false`,
+      {
+        headers: {
+          'hibp-api-key': hibpKey,
+          'user-agent': 'CyberSpace'
+        },
+        timeout: 15000
+      }
+    );
+
+    // 200 — array of breach objects
+    const breaches = (response.data || []).map(breach => ({
+      source: 'HIBP',
+      name: breach.Name,
+      domain: breach.Domain,
+      breachDate: breach.BreachDate,
+      dataClasses: breach.DataClasses,
+      isVerified: breach.IsVerified,
+      isSensitive: breach.IsSensitive
+    }));
+
+    return { breaches, warnings: [] };
+
+  } catch (error) {
+    if (error.response) {
+      if (error.response.status === 404) {
+        // Email not found in any breach
+        return { breaches: [], warnings: [] };
+      }
+      if (error.response.status === 401) {
+        logger.error('[HIBP] Invalid HIBP API key');
+        return {
+          breaches: [],
+          warnings: [{ type: 'hibp_auth_error', severity: 'high', description: 'Invalid HIBP API key' }]
+        };
+      }
+      if (error.response.status === 429) {
+        logger.warn('[HIBP] HIBP rate limit hit');
+        return {
+          breaches: [],
+          warnings: [{ type: 'hibp_rate_limit', severity: 'medium', description: 'HIBP rate limit hit — try again later' }]
+        };
+      }
+    }
+
+    logger.error('[HIBP] API error:', error.message);
+    return {
+      breaches: [],
+      warnings: [{ type: 'hibp_error', severity: 'low', description: 'HIBP check failed', reason: error.message }]
+    };
+  }
+}
 
 /**
  * Check BreachDirectory API (free)
@@ -293,20 +361,13 @@ async function checkEmailReputation(email) {
       riskScore += 25;
     }
     
-    // If high risk score, create a synthetic breach record
+    // High risk score adds a warning, never a fabricated breach
     if (riskScore >= 50) {
-      breaches.push({
-        source: 'EmailReputation',
-        name: 'High Risk Email Pattern',
-        domain: domain || 'Unknown',
-        breachDate: new Date().toISOString().split('T')[0],
+      warnings.push({
+        type: 'high_risk_email_pattern',
+        severity: 'high',
         description: 'Email matches multiple high-risk patterns',
-        dataClasses: ['email', 'pattern_analysis'],
-        isVerified: false,
-        isFabricated: false,
-        isSensitive: false,
-        isRetired: false,
-        isSpamList: false
+        reason: `Risk score: ${riskScore}`
       });
     }
     

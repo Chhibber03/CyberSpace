@@ -1,6 +1,6 @@
 const dns = require('dns');
 const { promisify } = require('util');
-const punycode = require('punycode');
+
 const tldjs = require('tldjs');
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -155,13 +155,9 @@ async function performBasicAnalysis(urlObj, hostname, domain, subdomain) {
     return { threats: [], warnings: [], analysis: { whitelisted: true } };
   }
   
-  // Check if main domain is whitelisted (but be more careful)
+  // Check if main domain is whitelisted — any subdomain of a trusted domain is safe
   if (domain && legitimateDomains.includes(domain)) {
-    // Only whitelist if it's a direct subdomain of a trusted domain
-    const trustedSubdomains = ['www', 'mail', 'docs', 'drive', 'maps', 'translate'];
-    if (subdomain && trustedSubdomains.includes(subdomain)) {
-      return { threats: [], warnings: [], analysis: { whitelisted: true } };
-    }
+    return { threats: [], warnings: [], analysis: { whitelisted: true } };
   }
 
   // Check for raw IP addresses
@@ -196,7 +192,7 @@ async function performBasicAnalysis(urlObj, hostname, domain, subdomain) {
 
   // Check for suspicious TLDs (expanded list)
   const suspiciousTlds = [
-    'zip', 'mov', 'country', 'gq', 'ml', 'cf', 'tk', 'ga', 'xyz', 'top', 'club', 'online', 'site', 'click', 'link', 'bid', 'loan', 'work', 'tech', 'app', 'dev', 'io', 'co', 'me', 'tv', 'cc', 'ws', 'info', 'biz'
+    'zip', 'mov', 'country', 'gq', 'ml', 'cf', 'tk', 'ga', 'xyz', 'top', 'club', 'online', 'site', 'click', 'link', 'bid', 'loan', 'work', 'cc', 'ws', 'biz'
   ];
   
   const tld = tldjs.getPublicSuffix(hostname);
@@ -271,9 +267,10 @@ async function performBasicAnalysis(urlObj, hostname, domain, subdomain) {
     });
   }
 
-  // Check for random numbers/strings in domain (more aggressive)
-  const hasRandomNumbers = /\d{3,}/.test(hostname); // More aggressive - 3+ digits
-  const hasRandomStrings = /[a-z]{8,}/.test(hostname); // More aggressive - 8+ chars
+  // Check for random numbers/strings in domain label (not the full hostname)
+  const domainLabel = hostname.split('.')[0];
+  const hasRandomNumbers = /\d{4,}/.test(domainLabel); // 4+ consecutive digits
+  const hasRandomStrings = /[a-z]{15,}/.test(domainLabel); // 15+ consecutive lowercase chars
   if (hasRandomNumbers || hasRandomStrings) {
     warnings.push({
       type: 'random_elements',
@@ -301,9 +298,7 @@ async function performBasicAnalysis(urlObj, hostname, domain, subdomain) {
     /[a-z]+\d{3,}/,           // word + 3+ digits (e.g., "oferta374")
     /\d{3,}[a-z]+\d{3,}/,     // 3+ digits + word + 3+ digits
     /[a-z]+-[a-z]+-[a-z]+/,   // 3+ hyphenated words
-    /[a-z]{2,}\.[a-z]{2,}\.[a-z]{2,}/, // 3+ dot-separated parts
     /[a-z]+[0-9]{3,}[a-z]+/,  // word + 3+ numbers + word
-    /[a-z]{10,}/,             // very long single word
     /\d{6,}/,                 // 6+ consecutive digits
   ];
 
@@ -336,7 +331,7 @@ async function performBasicAnalysis(urlObj, hostname, domain, subdomain) {
 
   // Check for excessive domain parts (more aggressive)
   const domainParts = hostname.split('.');
-  if (domainParts.length > 3) { // More aggressive - 3+ parts
+  if (domainParts.length > 4) { // 5+ parts is suspicious
     warnings.push({
       type: 'excessive_domain_parts',
       severity: 'medium',
@@ -390,9 +385,7 @@ async function performBasicAnalysis(urlObj, hostname, domain, subdomain) {
     });
   }
 
-  analysis.threats = threats;
-  analysis.warnings = warnings;
-  return analysis;
+  return { threats, warnings, analysis };
 }
 
 /**

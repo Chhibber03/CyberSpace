@@ -103,6 +103,7 @@ async function getThreatIntelligence(url, hostname) {
  */
 async function checkGoogleSafeBrowsing(url) {
   if (!API_KEYS.GOOGLE_SAFE_BROWSING) {
+    logger.warn('[GoogleSafeBrowsing] API key not configured — check skipped');
     return { safe: true, reason: 'API key not configured' };
   }
 
@@ -136,98 +137,133 @@ async function checkGoogleSafeBrowsing(url) {
 }
 
 /**
- * Check VirusTotal API
+ * Check VirusTotal API v3
  */
 async function checkVirusTotal(url) {
   if (!API_KEYS.VIRUS_TOTAL) {
-    return { malicious: 0, total: 0, reason: 'API key not configured' };
+    logger.warn('[VirusTotal] API key not configured — check skipped');
+    return { malicious: 0, suspicious: 0, total: 0, safe: true, reason: 'API key not configured' };
   }
 
   try {
-    // URL scan
-    const scanResponse = await axios.post(
-      'https://www.virustotal.com/vtapi/v2/url/scan',
-      `url=${encodeURIComponent(url)}&apikey=${API_KEYS.VIRUS_TOTAL}`,
+    // Submit URL for scanning via v3 API
+    const submitResponse = await axios.post(
+      'https://www.virustotal.com/api/v3/urls',
+      `url=${encodeURIComponent(url)}`,
+      {
+        headers: {
+          'x-apikey': API_KEYS.VIRUS_TOTAL,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        timeout: 15000
+      }
+    );
+
+    const analysisId = submitResponse.data.data.id;
+
+    // Poll for results up to 3 times with 2s delay
+    let analysisData = null;
+    for (let i = 0; i < 3; i++) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const reportResponse = await axios.get(
+        `https://www.virustotal.com/api/v3/analyses/${analysisId}`,
+        {
+          headers: { 'x-apikey': API_KEYS.VIRUS_TOTAL },
+          timeout: 10000
+        }
+      );
+
+      if (reportResponse.data.data.attributes.status === 'completed') {
+        analysisData = reportResponse.data.data.attributes;
+        break;
+      }
+    }
+
+    if (!analysisData) {
+      return { malicious: 0, suspicious: 0, total: 0, safe: true, reason: 'Analysis timed out' };
+    }
+
+    const stats = analysisData.stats;
+    const malicious = stats.malicious || 0;
+    const suspicious = stats.suspicious || 0;
+    const harmless = stats.harmless || 0;
+    const undetected = stats.undetected || 0;
+    const total = malicious + suspicious + harmless + undetected;
+
+    return {
+      malicious,
+      suspicious,
+      total,
+      safe: malicious === 0
+    };
+
+  } catch (error) {
+    logger.error('VirusTotal API error:', error);
+    return { malicious: 0, suspicious: 0, total: 0, safe: true, reason: 'API check failed' };
+  }
+}
+
+/**
+ * Check URLVoid (APIVoid) API
+ */
+async function checkUrlVoid(hostname) {
+  if (!API_KEYS.URLVOID) {
+    logger.warn('[URLVoid] API key not configured — check skipped');
+    return { reputation: 50, detections: 0, reason: 'API key not configured' };
+  }
+
+  try {
+    const response = await axios.get(
+      `https://endpoint.apivoid.com/urlrep/v1/pay-as-you-go/`,
+      {
+        params: {
+          key: API_KEYS.URLVOID,
+          host: hostname
+        },
+        timeout: 10000
+      }
+    );
+
+    const data = response.data;
+    const riskResult = data.data?.report?.risk_score?.result || 0;
+    const detections = data.data?.report?.blacklists?.detections || 0;
+
+    return {
+      reputation: 100 - riskResult,
+      detections,
+      safe: detections === 0
+    };
+
+  } catch (error) {
+    logger.error('URLVoid API error:', error);
+    return { reputation: 50, detections: 0, reason: 'API check failed' };
+  }
+}
+
+/**
+ * Check PhishTank API (JSON)
+ */
+async function checkPhishTank(url) {
+  if (!API_KEYS.PHISHTANK) {
+    logger.warn('[PhishTank] API key not configured — check skipped');
+    return { inDatabase: false, checked: false, reason: 'API key not configured' };
+  }
+
+  try {
+    const response = await axios.post(
+      'https://checkurl.phishtank.com/checkurl/',
+      `url=${encodeURIComponent(url)}&format=json&app_key=${encodeURIComponent(API_KEYS.PHISHTANK)}`,
       {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         timeout: 15000
       }
     );
 
-    // Wait a bit and then get the report
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const reportResponse = await axios.get(
-      `https://www.virustotal.com/vtapi/v2/url/report?apikey=${API_KEYS.VIRUS_TOTAL}&resource=${encodeURIComponent(url)}`,
-      { timeout: 10000 }
-    );
-
-    const report = reportResponse.data;
+    const results = response.data.results;
     return {
-      malicious: report.positives || 0,
-      total: report.total || 0,
-      scanDate: report.scan_date,
-      permalink: report.permalink
-    };
-
-  } catch (error) {
-    logger.error('VirusTotal API error:', error);
-    return { malicious: 0, total: 0, reason: 'API check failed' };
-  }
-}
-
-/**
- * Check URLVoid API
- */
-async function checkUrlVoid(hostname) {
-  if (!API_KEYS.URLVOID) {
-    return { reputation: 50, reason: 'API key not configured' };
-  }
-
-  try {
-    const response = await axios.get(
-      `https://api.urlvoid.com/v1/purl/${hostname}`,
-      {
-        headers: { 'API-Key': API_KEYS.URLVOID },
-        timeout: 10000
-      }
-    );
-
-    const data = response.data;
-    return {
-      reputation: data.reputation || 50,
-      riskScore: data.risk_score || 0,
-      country: data.country,
-      server: data.server
-    };
-
-  } catch (error) {
-    logger.error('URLVoid API error:', error);
-    return { reputation: 50, reason: 'API check failed' };
-  }
-}
-
-/**
- * Check PhishTank API
- */
-async function checkPhishTank(url) {
-  try {
-    const response = await axios.get(
-      `https://checkurl.phishtank.com/checkurl/`,
-      {
-        params: { url },
-        timeout: 10000
-      }
-    );
-
-    // PhishTank returns HTML, so we need to parse it
-    const inDatabase = response.data.includes('phish confirmed') || 
-                      response.data.includes('phish verified');
-
-    return {
-      inDatabase,
-      checked: true,
-      timestamp: new Date().toISOString()
+      inDatabase: !!results.in_database,
+      verified: !!results.verified
     };
 
   } catch (error) {

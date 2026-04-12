@@ -4,6 +4,23 @@
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache feels ok for demos
 
+async function sessionGet(key) {
+  try {
+    if (chrome.storage.session) {
+      return await chrome.storage.session.get([key]);
+    }
+  } catch (e) {}
+  return {};
+}
+
+async function sessionSet(data) {
+  try {
+    if (chrome.storage.session) {
+      await chrome.storage.session.set(data);
+    }
+  } catch (e) {}
+}
+
 function normalizeUrl(raw) {
   try {
     let u = raw.trim();
@@ -99,7 +116,7 @@ async function checkAndCache(url, tabId) {
   if (!normalized) return;
 
   // Basic cache
-  const { cache = {} } = await chrome.storage.session.get(["cache"]);
+  const { cache = {} } = await sessionGet("cache");
   const entry = cache[normalized];
   const now = Date.now();
   if (entry && now - entry.ts < CACHE_TTL_MS) {
@@ -110,7 +127,7 @@ async function checkAndCache(url, tabId) {
   try {
     const result = await callApiCheck(apiBase, normalized);
     cache[normalized] = { result, ts: now };
-    await chrome.storage.session.set({ cache });
+    await sessionSet({ cache });
     await setBadge(result.status, tabId);
     // Tell the content script
     chrome.tabs.sendMessage(tabId, { type: "statusUpdate", url: normalized, result }, (response) => {
@@ -147,9 +164,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "cacheResult" && msg.url && msg.result) {
     (async () => {
-      const { cache = {} } = await chrome.storage.session.get(["cache"]);
+      const { cache = {} } = await sessionGet("cache");
       cache[msg.url] = { result: msg.result, ts: Date.now() };
-      await chrome.storage.session.set({ cache });
+      await sessionSet({ cache });
       if (sender?.tab?.id) {
         setBadge(msg.result.status, sender.tab.id);
       }

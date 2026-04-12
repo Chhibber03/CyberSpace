@@ -52,7 +52,6 @@ app.use(helmet({
 const corsOrigins = [
   'http://localhost:5173', 
   'http://localhost:3000', 
-  'chrome-extension://*',
   'https://cyberspace-frontend.onrender.com'
 ];
 
@@ -62,7 +61,14 @@ if (process.env.CORS_ORIGIN) {
 }
 
 app.use(cors({
-  origin: corsOrigins,
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    const allowed = corsOrigins.some(o => origin === o) ||
+                    origin.startsWith('chrome-extension://') ||
+                    origin.startsWith('moz-extension://');
+    if (allowed) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 

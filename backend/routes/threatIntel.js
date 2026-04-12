@@ -17,7 +17,14 @@ router.get('/url/:url', validateQuery(Joi.object({
     
     logger.info(`Threat intelligence request for: ${url}`);
     
-    const threatIntel = await getThreatIntelligence(url, new URL(url).hostname);
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(decodeURIComponent(url));
+    } catch (e) {
+      return res.status(400).json({ success: false, error: 'Invalid URL format' });
+    }
+    
+    const threatIntel = await getThreatIntelligence(url, parsedUrl.hostname);
     
     res.json({
       success: true,
