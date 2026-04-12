@@ -37,8 +37,8 @@ async function getApiBase() {
     return data.apiBase;
   }
   
-  // Set default API base based on environment
-  const defaultApiBase = "https://cyberspace-backend.onrender.com/api/v1/scan";
+  // Set default API base
+  const defaultApiBase = "http://localhost:3000/api/v1/scan";
   await chrome.storage.sync.set({ apiBase: defaultApiBase });
   return defaultApiBase;
 }
