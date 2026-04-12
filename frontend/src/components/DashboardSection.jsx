@@ -1,7 +1,15 @@
+import { useState } from 'react';
+
 export default function DashboardSection({ isActive, urlHistory, emailHistory }) {
+  const [showAllUrls, setShowAllUrls] = useState(false);
+  const [showAllEmails, setShowAllEmails] = useState(false);
+
   if (!isActive) return null;
 
   const formatWhen = (ts) => new Date(ts).toLocaleString();
+
+  const displayedUrls = showAllUrls ? urlHistory : urlHistory.slice(0, 7);
+  const displayedEmails = showAllEmails ? emailHistory : emailHistory.slice(0, 7);
 
   return (
     <section id="dashboard" className="section section--active">
@@ -18,7 +26,7 @@ export default function DashboardSection({ isActive, urlHistory, emailHistory })
                 <div>When</div>
               </div>
               <div className="table__body">
-                {urlHistory.map((item, idx) => {
+                {displayedUrls.map((item, idx) => {
                   const isSafe = item.verdict?.safe;
                   const status = isSafe ? 'Safe' : 'Phishing';
                   const statusCls = isSafe ? 'badge badge--success' : 'badge badge--danger';
@@ -37,6 +45,15 @@ export default function DashboardSection({ isActive, urlHistory, emailHistory })
                 })}
               </div>
             </div>
+            {urlHistory.length > 7 && (
+              <button 
+                className="btn btn--secondary" 
+                style={{ marginTop: '14px', width: '100%' }} 
+                onClick={() => setShowAllUrls(!showAllUrls)}
+              >
+                {showAllUrls ? 'Show Less' : 'Show More'}
+              </button>
+            )}
           </div>
 
           <div className="history__block">
@@ -48,7 +65,7 @@ export default function DashboardSection({ isActive, urlHistory, emailHistory })
                 <div>When</div>
               </div>
               <div className="table__body">
-                {emailHistory.map((item, idx) => {
+                {displayedEmails.map((item, idx) => {
                   const isBreached = item.breached;
                   const status = isBreached ? 'Found in leaks' : 'Not found';
                   const statusCls = isBreached ? 'badge badge--danger' : 'badge badge--success';
@@ -67,6 +84,15 @@ export default function DashboardSection({ isActive, urlHistory, emailHistory })
                 })}
               </div>
             </div>
+            {emailHistory.length > 7 && (
+              <button 
+                className="btn btn--secondary" 
+                style={{ marginTop: '14px', width: '100%' }} 
+                onClick={() => setShowAllEmails(!showAllEmails)}
+              >
+                {showAllEmails ? 'Show Less' : 'Show More'}
+              </button>
+            )}
           </div>
         </div>
       </div>
